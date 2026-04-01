@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Card } from "./components/ui/card";
+import Header from "./components/widgets/header/Header.vue";
 </script>
 
 <template>
-    <div><Card></Card></div>
+    <Header></Header>
 </template>

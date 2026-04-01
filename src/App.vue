@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import { Card } from "./components/ui/card";
 </script>
 
 <template>
-  <HelloWorld />
+    <div><Card></Card></div>
 </template>

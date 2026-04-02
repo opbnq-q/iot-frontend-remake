@@ -11,20 +11,20 @@ export interface ITelemetryProperty {
   value: string;
 }
 
-export type FieldType = "int" | "float" | "string" | "bool";
+export type FieldMetaType = "int" | "float" | "string" | "bool";
 
 export interface IParamMetadata {
   id: string;
   name: string;
   unit: string;
-  type: FieldType;
+  type: FieldMetaType;
   defaultValue: any;
   value: any;
 }
 
 export interface IActionArg {
   name: string;
-  type: FieldType;
+  type: FieldMetaType;
 }
 
 export interface IActionMetadata {

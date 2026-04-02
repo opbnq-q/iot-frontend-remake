@@ -1,0 +1,98 @@
+<script setup lang="ts">
+import { Button } from "@/components/ui/button";
+import type { IConfigSchema } from "@/core/forms/interfaces/config.schema.interface";
+import { ref } from "vue";
+import { Save, X } from "lucide-vue-next";
+import Textarea from "@/components/ui/textarea/Textarea.vue";
+import Switch from "@/components/ui/switch/Switch.vue";
+import NumberField from "@/components/ui/number-field/NumberField.vue";
+import NumberFieldDecrement from "@/components/ui/number-field/NumberFieldDecrement.vue";
+import NumberFieldIncrement from "@/components/ui/number-field/NumberFieldIncrement.vue";
+import NumberFieldInput from "@/components/ui/number-field/NumberFieldInput.vue";
+import type { FieldType } from "@/core/forms/field.type";
+
+const props = defineProps<{
+    config: IConfigSchema;
+}>();
+
+const emits = defineEmits<{
+    (e: "close"): void;
+    (e: "save", obj: Record<string, FieldType | undefined>): void;
+}>();
+
+const keys = Object.keys(
+    props.config.fields,
+) as (keyof typeof props.config.fields)[];
+
+const data = ref<Record<string, FieldType | undefined>>({});
+
+keys.forEach((el) => (data.value[el] = undefined));
+</script>
+
+<template>
+    <form
+        @submit.prevent
+        class="space-y-6 rounded-lg border border-border bg-card p-6 text-card-foreground shadow-sm max-w-xl"
+    >
+        <h1 class="text-lg font-semibold">
+            {{ props.config.title ?? "Команда" }}
+        </h1>
+
+        <div
+            v-for="field in keys"
+            v-show="!props.config.fields[field].isReadonly"
+            class="grid gap-2"
+        >
+            <span class="text-sm font-medium text-muted-foreground">{{
+                props.config.fields[field].name
+            }}</span>
+            <Textarea
+                v-if="props.config.fields[field].type == 'string'"
+                v-model="data[field] as string"
+            ></Textarea>
+            <NumberField
+                v-else-if="
+                    ['float', 'int'].includes(props.config.fields[field].type)
+                "
+                v-model="data[field] as number"
+                :step="
+                    props.config.fields[field].type === 'float' ? 0.0000001 : 1
+                "
+                :formatOptions="
+                    props.config.fields[field].type === 'float'
+                        ? { maximumFractionDigits: 7 }
+                        : { maximumFractionDigits: 0 }
+                "
+            >
+                <div class="relative">
+                    <NumberFieldInput class="h-10" />
+                    <NumberFieldDecrement />
+                    <NumberFieldIncrement />
+                </div>
+            </NumberField>
+            <Switch
+                v-else-if="props.config.fields[field].type === 'bool'"
+                v-model="data[field] as boolean"
+            ></Switch>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+            <Button
+                type="button"
+                @click="emits('close')"
+                :variant="'outline'"
+                class="h-9 w-9 p-0"
+            >
+                <X />
+            </Button>
+            <Button
+                type="button"
+                @click="emits('save', data)"
+                :variant="'default'"
+                class="h-9 w-9 p-0"
+            >
+                <Save />
+            </Button>
+        </div>
+    </form>
+</template>

@@ -37,8 +37,14 @@ export interface IStatusResponse {
   status: string;
 }
 
+export interface IUpdateMessage {
+  props: ITelemetryProperty[];
+  name: string;
+  color: string;
+}
+
 export interface IWSHandlers {
-  onMessage?: (data: ITelemetryProperty[], ws: WebSocket) => void;
+  onMessage?: (data: IUpdateMessage, ws: WebSocket) => void;
   onOpen?: (event: Event, ws: WebSocket) => void;
   onError?: (event: Event, ws: WebSocket) => void;
   onClose?: (event: CloseEvent, ws: WebSocket) => void;
@@ -108,7 +114,7 @@ export class DeviceConnection {
     ws.onmessage = (event) => {
       if (handlers.onMessage) {
         try {
-          const data = JSON.parse(event.data) as ITelemetryProperty[];
+          const data = JSON.parse(event.data) as IUpdateMessage;
           handlers.onMessage(data, ws);
         } catch (error) {
           console.error(error);

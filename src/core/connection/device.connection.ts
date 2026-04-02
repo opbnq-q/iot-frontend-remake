@@ -47,59 +47,55 @@ export interface IWSHandlers {
 export class DeviceConnection {
   constructor(public readonly url: string) {}
 
-  public async ping(): Promise<IPingResponse> {
-    const request = await fetch(`${this.url}/ping`, {
-      headers: { "Content-Type": "application/json" },
+  private async requestJson<T>(
+    path: string,
+    init: RequestInit = {},
+  ): Promise<T> {
+    const headers = new Headers(init.headers);
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+
+    const response = await fetch(`${this.url}${path}`, {
+      ...init,
+      headers,
     });
-    if (!request.ok) throw new HttpException(request.status);
-    return await request.json();
+
+    if (!response.ok) throw new HttpException(response.status);
+    return (await response.json()) as T;
+  }
+
+  public async ping(): Promise<IPingResponse> {
+    return this.requestJson<IPingResponse>("/ping");
   }
 
   public async getTelemetry(): Promise<ITelemetryProperty[]> {
-    const request = await fetch(`${this.url}/telemetry`, {
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!request.ok) throw new HttpException(request.status);
-    return await request.json();
+    return this.requestJson<ITelemetryProperty[]>("/telemetry");
   }
 
   public async getParamScheme(): Promise<IParamMetadata[]> {
-    const request = await fetch(`${this.url}/param/scheme`, {
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!request.ok) throw new HttpException(request.status);
-    return await request.json();
+    return this.requestJson<IParamMetadata[]>("/param/scheme");
   }
 
   public async setParam(id: string, value: any): Promise<IStatusResponse> {
-    const request = await fetch(`${this.url}/param`, {
+    return this.requestJson<IStatusResponse>("/param", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, value }),
     });
-    if (!request.ok) throw new HttpException(request.status);
-    return await request.json();
   }
 
   public async getActionScheme(): Promise<IActionMetadata[]> {
-    const request = await fetch(`${this.url}/action/scheme`, {
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!request.ok) throw new HttpException(request.status);
-    return await request.json();
+    return this.requestJson<IActionMetadata[]>("/action/scheme");
   }
 
   public async executeAction(
     id: string,
     args: Record<string, unknown>[],
   ): Promise<IStatusResponse> {
-    const request = await fetch(`${this.url}/action`, {
+    return this.requestJson<IStatusResponse>("/action", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, args }),
     });
-    if (!request.ok) throw new HttpException(request.status);
-    return await request.json();
   }
 
   public subscribeTelemetry(handlers: IWSHandlers): WebSocket {
@@ -114,8 +110,8 @@ export class DeviceConnection {
         try {
           const data = JSON.parse(event.data) as ITelemetryProperty[];
           handlers.onMessage(data, ws);
-        } catch (e) {
-          console.error(e);
+        } catch (error) {
+          console.error(error);
         }
       }
     };

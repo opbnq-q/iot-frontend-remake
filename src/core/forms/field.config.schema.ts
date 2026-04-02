@@ -3,31 +3,31 @@ import type { IValidationConfig } from "./interfaces/validation.config.interface
 import { ValidationConfigBuilder } from "./validation-builder.config";
 
 export class FormsConfigField {
-  private config: Partial<IConfigFieldSchema> = {};
+  private fieldConfig: Partial<IConfigFieldSchema> = {};
 
-  setName(name: string) {
-    this.config.name = name;
+  setName(name: string): void {
+    this.fieldConfig.name = name;
   }
 
-  setValidation(validation: IValidationConfig) {
-    this.config.validation = validation;
+  setValidation(validation: IValidationConfig): void {
+    this.fieldConfig.validation = validation;
   }
 
-  setType(type: IConfigFieldSchema["type"]) {
-    this.config.type = type;
+  setType(type: IConfigFieldSchema["type"]): void {
+    this.fieldConfig.type = type;
   }
 
   build(): IConfigFieldSchema {
-    this.config.type = this.config.type ?? "string";
-    this.config.name = this.config.name ?? `Данные типа ${this.config.type}`;
-    this.config.validation =
-      this.config.validation ??
-      new ValidationConfigBuilder(this.config.type).build();
-    this.config.isReadonly =
-      typeof this.config.isReadonly === "undefined"
-        ? false
-        : this.config.isReadonly;
+    const type = this.fieldConfig.type ?? "string";
+    const validation =
+      this.fieldConfig.validation ?? new ValidationConfigBuilder(type).build();
+    const name = this.fieldConfig.name ?? `Данные типа ${type}`;
 
-    return this.config as IConfigFieldSchema;
+    return {
+      name,
+      type,
+      validation,
+      isReadonly: this.fieldConfig.isReadonly ?? false,
+    };
   }
 }

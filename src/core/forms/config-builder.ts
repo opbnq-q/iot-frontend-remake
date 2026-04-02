@@ -2,25 +2,27 @@ import type { IConfigFieldSchema } from "./interfaces/config.field.schema.interf
 import type { IConfigSchema } from "./interfaces/config.schema.interface";
 
 export class FormsConfigBuilder {
-  private readonly schema: IConfigSchema = {
+  private readonly config: IConfigSchema = {
     fields: {},
   };
 
-  addField(field: IConfigFieldSchema) {
-    this.schema.fields[field.name] = field;
+  addField(field: IConfigFieldSchema): void {
+    this.config.fields[field.name] = field;
   }
 
-  removeField(fieldName: string) {
-    delete this.schema.fields[fieldName];
+  removeField(fieldName: string): void {
+    delete this.config.fields[fieldName];
   }
 
-  updateField(field: IConfigFieldSchema) {
+  updateField(field: IConfigFieldSchema): void {
     this.removeField(field.name);
     this.addField(field);
   }
 
   build(): IConfigSchema {
-    this.schema.title = this.schema.title ?? "";
-    return this.schema;
+    return {
+      ...this.config,
+      title: this.config.title ?? "",
+    };
   }
 }

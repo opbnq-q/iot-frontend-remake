@@ -8,6 +8,7 @@ import { useMediaQuery } from "@vueuse/core";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Toaster } from "@/components/ui/sonner";
+import { devices } from "./devices";
 
 const formStore = useForm();
 const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -58,7 +59,7 @@ const handleSave = (obj: Record<string, unknown>) => {
         </DrawerContent>
     </Drawer>
 
-    <DeviceCard
-        :device="new Device('http://176.197.120.121:8888')"
-    ></DeviceCard>
+    <div class="flex gap-4 flex-col mx-4">
+        <DeviceCard v-for="device in devices" :device></DeviceCard>
+    </div>
 </template>

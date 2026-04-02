@@ -37,7 +37,9 @@ watch(
     (nextKeys) => {
         const nextData: Record<string, FieldType | undefined> = {};
         nextKeys.forEach((el) => {
-            nextData[el as string] = data.value[el as string];
+            nextData[el as string] =
+                data.value[el as string] ??
+                props.config.fields?.[el as string]?.defaultValue;
         });
         data.value = nextData;
     },

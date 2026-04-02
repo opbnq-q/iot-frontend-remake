@@ -1,6 +1,7 @@
 import type { IConfigFieldSchema } from "./interfaces/config.field.schema.interface";
 import type { IValidationConfig } from "./interfaces/validation.config.interface";
 import { ValidationConfigBuilder } from "./validation-builder.config";
+import type { FieldType } from "./field.type";
 
 export class FormsConfigField {
   private fieldConfig: Partial<IConfigFieldSchema> = {};
@@ -21,6 +22,10 @@ export class FormsConfigField {
     this.fieldConfig.type = type;
   }
 
+  setDefaultValue(value: FieldType): void {
+    this.fieldConfig.defaultValue = value;
+  }
+
   build(): IConfigFieldSchema {
     const type = this.fieldConfig.type ?? "string";
     const validation =
@@ -33,6 +38,7 @@ export class FormsConfigField {
       type,
       validation,
       isReadonly: this.fieldConfig.isReadonly ?? false,
+      defaultValue: this.fieldConfig.defaultValue,
     };
   }
 }

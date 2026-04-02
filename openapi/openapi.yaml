@@ -1,0 +1,238 @@
+openapi: 3.1.0
+info:
+  title: Device API
+  description: API для управления и мониторинга устройств
+  version: 1.0.0
+
+servers:
+  - url: http://176.197.120.121:8888
+    description: Local device server
+
+paths:
+  /ping:
+    get:
+      summary: Проверка доступности устройства
+      operationId: pingDevice
+      responses:
+        '200':
+          description: Устройство доступно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInfo'
+
+  /telemetry:
+    get:
+      summary: Получение телеметрии устройства
+      operationId: getTelemetry
+      responses:
+        '200':
+          description: Список параметров телеметрии
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Property'
+
+  /ws:
+    get:
+      summary: WebSocket подключение
+      operationId: connectWebSocket
+      responses:
+        '101':
+          description: WebSocket соединение установлено
+
+  /param/scheme:
+    get:
+      summary: Получить схему всех параметров
+      operationId: getParamScheme
+      responses:
+        '200':
+          description: Список параметров с метаданными
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParamOut'
+
+  /param:
+    put:
+      summary: Установить значение параметра
+      operationId: setParam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParamSet'
+      responses:
+        '200':
+          description: Успешно
+        '400':
+          description: Ошибка
+
+  /action/scheme:
+    get:
+      summary: Получить схему всех команд
+      description: Возвращает список доступных команд и описание их аргументов.
+      operationId: getActionScheme
+      responses:
+        '200':
+          description: Список доступных действий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActionOut'
+              example:
+                - id: "closeServo"
+                  name: "Закрыть серво"
+                  args: [ ]
+                - id: "startHeating"
+                  name: "Начать нагрев"
+                  args:
+                    - id: "step"
+                      name: "Шаг нагрева"
+                      type: "float"
+                - id: "openServo"
+                  name: "Открыть серво"
+                  args:
+                    - id: "greeting"
+                      name: "Приветствие"
+                      type: "string"
+                    - id: "angle"
+                      name: "Угол"
+                      type: "int"
+
+  /action:
+    post:
+      summary: Выполнить команду
+      description: Отправляет запрос на выполнение действия с указанными аргументами.
+      operationId: executeAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionExec'
+            example:
+              id: "openServo"
+              args:
+                greeting: "you"
+                angle: 5
+      responses:
+        '200':
+          description: Команда успешно принята
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+              example:
+                status: "success"
+        '400':
+          description: Ошибка выполнения
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    DeviceInfo:
+      type: object
+      required: [ name, color ]
+      properties:
+        name: { type: string }
+        color: { type: string }
+
+    Property:
+      type: object
+      required: [ name, postfix, value ]
+      properties:
+        name: { type: string }
+        postfix: { type: string }
+        value: { type: string }
+
+    ValueType:
+      type: string
+      enum: [ int, float, string, bool ]
+
+    ParamOut:
+      type: object
+      required: [ id, name, unit, type, defaultValue, value ]
+      properties:
+        id: { type: string, maxLength: 15 }
+        name: { type: string }
+        unit: { type: string }
+        type: { $ref: '#/components/schemas/ValueType' }
+        defaultValue:
+          oneOf:
+            - { type: integer, format: int32 }
+            - { type: number, format: float }
+            - { type: string }
+            - { type: boolean }
+        value:
+          oneOf:
+            - { type: integer, format: int32 }
+            - { type: number, format: float }
+            - { type: string, maxLength: 12 }
+            - { type: boolean }
+
+    ParamSet:
+      type: object
+      required: [ id, value ]
+      properties:
+        id: { type: string, maxLength: 15 }
+        value:
+          oneOf:
+            - { type: integer, format: int32 }
+            - { type: number, format: float }
+            - { type: string }
+            - { type: boolean }
+
+    ActionArg:
+      type: object
+      required: [ id, name, type ]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { $ref: '#/components/schemas/ValueType' }
+
+    ActionOut:
+      type: object
+      required: [ id, name, args ]
+      properties:
+        id: { type: string, maxLength: 15 }
+        name: { type: string }
+        args:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActionArg'
+
+    ActionExec:
+      type: object
+      required: [ id, args ]
+      properties:
+        id: { type: string }
+        args:
+          type: object
+          additionalProperties:
+            oneOf:
+              - { type: integer, format: int32 }
+              - { type: number, format: float }
+              - { type: string }
+              - { type: boolean }
+
+    StatusResponse:
+      type: object
+      properties:
+        status: { type: string }
+
+    ErrorResponse:
+      type: object
+      properties:
+        status: { type: string }
+        error: { type: string }

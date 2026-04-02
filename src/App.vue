@@ -2,7 +2,6 @@
 import DeviceCard from "./components/widgets/device-card/DeviceCard.vue";
 import FormBuilder from "./components/widgets/form-builder/FormBuilder.vue";
 import Header from "./components/widgets/header/Header.vue";
-import { Device } from "./core/device/device.class";
 import { useForm } from "./stores/use-form.store";
 import { useMediaQuery } from "@vueuse/core";
 import { Dialog, DialogContent } from "@/components/ui/dialog";

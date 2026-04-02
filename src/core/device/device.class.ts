@@ -6,6 +6,8 @@ export interface IDataField {
   value: string;
 }
 
+export type Listener = (device: Device) => void;
+
 export class Device {
   private readonly connection: DeviceConnection;
   public color?: string;
@@ -15,16 +17,23 @@ export class Device {
 
   public dataFields: IDataField[] = [];
 
-  constructor(
-    public readonly url: string,
-    private readonly onDataFieldsChanged: () => void,
-  ) {
+  public listeners: Listener[] = [];
+
+  constructor(public readonly url: string) {
     this.connection = new DeviceConnection(url);
+  }
+
+  private executeListeners() {
+    this.listeners.forEach((el) => el(this));
+  }
+
+  public addListener(cb: Listener) {
+    this.listeners.push(cb);
   }
 
   async ping() {
     const response = await this.connection.ping();
-    this?.onDataFieldsChanged();
+    this.executeListeners();
     this.color = response.color;
     this.name = response.name;
   }
@@ -38,8 +47,7 @@ export class Device {
     this.wsConn = this.connection.subscribeTelemetry({
       onMessage: (data) => {
         this.update(data.name, data.color, data.props);
-
-        this?.onDataFieldsChanged();
+        this.executeListeners();
       },
     });
   }

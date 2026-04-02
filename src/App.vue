@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import DeviceCard from "./components/widgets/device-card/DeviceCard.vue";
 import FormBuilder from "./components/widgets/form-builder/FormBuilder.vue";
 import Header from "./components/widgets/header/Header.vue";
 import type { FieldMetaType } from "./core/connection/device.connection";
-import { FormsConfigBuilder } from "./core/forms/config-builder";
+import { Device } from "./core/device/device.class";
+import { FormsConfigBuilder } from "./core/forms/config-builder.forms";
 import { FormsConfigField } from "./core/forms/field.config.schema";
 
 type FieldDefinition = {
@@ -64,8 +66,12 @@ fieldDefinitions.forEach(({ name, type }) => {
 
 <template>
     <Header></Header>
-    <FormBuilder
+    <!-- <FormBuilder
         :config="config.build()"
         @save="(el) => console.log(el)"
-    ></FormBuilder>
+    ></FormBuilder> -->
+
+    <DeviceCard
+        :device="new Device('http://176.197.120.121:8888')"
+    ></DeviceCard>
 </template>

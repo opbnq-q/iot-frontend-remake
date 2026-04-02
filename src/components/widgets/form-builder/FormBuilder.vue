@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import type { IConfigSchema } from "@/core/forms/interfaces/config.schema.interface";
 import { computed, ref, watch } from "vue";
-import { Save, X } from "lucide-vue-next";
+import { Loader2, Save, X } from "lucide-vue-next";
 import Textarea from "@/components/ui/textarea/Textarea.vue";
 import Switch from "@/components/ui/switch/Switch.vue";
 import NumberField from "@/components/ui/number-field/NumberField.vue";
@@ -13,12 +13,15 @@ import type { FieldType } from "@/core/forms/field.type";
 
 const props = defineProps<{
     config: IConfigSchema;
+    isSubmitting?: boolean;
 }>();
 
 const emits = defineEmits<{
     (e: "close"): void;
     (e: "save", obj: Record<string, FieldType | undefined>): void;
 }>();
+
+const isSubmitting = computed(() => props.isSubmitting ?? false);
 
 const keys = computed(
     () =>
@@ -115,8 +118,10 @@ const buildPayload = (): Record<string, FieldType | undefined> => {
                 @click="emits('save', buildPayload())"
                 :variant="'default'"
                 class="h-9 w-9 p-0"
+                :disabled="isSubmitting"
             >
-                <Save />
+                <Loader2 v-if="isSubmitting" class="animate-spin" />
+                <Save v-else />
             </Button>
         </div>
     </form>

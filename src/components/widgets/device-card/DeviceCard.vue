@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
     Card,
     CardAction,
@@ -10,7 +9,7 @@ import {
 import { Action } from "@/core/actions/action.class";
 import type { Device, IDataField } from "@/core/device/device.class";
 import { useForm } from "@/stores/use-form.store";
-import { AlertCircleIcon, CheckCircle2Icon } from "lucide-vue-next";
+import { toast } from "vue-sonner";
 import { onMounted, onUnmounted, ref } from "vue";
 
 const props = defineProps<{
@@ -29,19 +28,6 @@ type ActionView = Pick<Action, "name" | "fetch" | "getConfig">;
 
 const actions = ref<ActionView[]>([]);
 
-type AlertState = {
-    variant: "default" | "destructive";
-    title: string;
-    description?: string;
-};
-
-const alertState = ref<AlertState>({
-    variant: "default",
-    title: "",
-    description: "",
-});
-const isAlertVisible = ref(false);
-
 onMounted(async () => {
     props.device.addListener((obj) => {
         data.value.name = obj.name;
@@ -57,40 +43,33 @@ onUnmounted(() => props.device.closeWs());
 
 const formStore = useForm();
 
-const showAlert = (state: AlertState) => {
-    alertState.value = state;
-    isAlertVisible.value = true;
-};
-
-const clearAlert = () => {
-    isAlertVisible.value = false;
-};
-
 const openActionForm = (action: ActionView) => {
     if (formStore.isVisible) formStore.hide();
+    formStore.setSubmitting(false);
     formStore.open(action.getConfig(), {
         save: async (obj) => {
-            clearAlert();
+            formStore.setSubmitting(true);
             try {
                 const response = await action.fetch(obj);
                 formStore.hide();
-                showAlert({
-                    variant: "default",
-                    title: "Команда отправлена",
+                toast.success("Команда отправлена", {
                     description: response?.status ?? "Успешно",
                 });
             } catch (e) {
-                showAlert({
-                    variant: "destructive",
-                    title: "Ошибка выполнения",
+                toast.error("Ошибка выполнения", {
                     description:
                         e instanceof Error
                             ? e.message
                             : "Не удалось выполнить команду",
                 });
+            } finally {
+                formStore.setSubmitting(false);
             }
         },
-        close: () => formStore.hide(),
+        close: () => {
+            formStore.setSubmitting(false);
+            formStore.hide();
+        },
     });
 };
 </script>
@@ -107,14 +86,6 @@ const openActionForm = (action: ActionView) => {
             </div>
         </CardHeader>
         <CardContent class="space-y-3">
-            <Alert v-if="isAlertVisible" :variant="alertState.variant">
-                <CheckCircle2Icon v-if="alertState.variant !== 'destructive'" />
-                <AlertCircleIcon v-else />
-                <AlertTitle>{{ alertState.title }}</AlertTitle>
-                <AlertDescription v-if="alertState.description">
-                    {{ alertState.description }}
-                </AlertDescription>
-            </Alert>
             <div
                 v-for="field in data.fields"
                 :key="field.name"

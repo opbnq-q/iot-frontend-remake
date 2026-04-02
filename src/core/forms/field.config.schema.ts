@@ -9,6 +9,10 @@ export class FormsConfigField {
     this.fieldConfig.name = name;
   }
 
+  setId(id: string): void {
+    this.fieldConfig.id = id;
+  }
+
   setValidation(validation: IValidationConfig): void {
     this.fieldConfig.validation = validation;
   }
@@ -24,6 +28,7 @@ export class FormsConfigField {
     const name = this.fieldConfig.name ?? `Данные типа ${type}`;
 
     return {
+      id: this.fieldConfig.id ?? name,
       name,
       type,
       validation,

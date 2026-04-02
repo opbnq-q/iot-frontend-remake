@@ -7,7 +7,8 @@ export class FormsConfigBuilder {
   };
 
   addField(field: IConfigFieldSchema): void {
-    this.config.fields[field.name] = field;
+    const key = field.id ?? field.name;
+    this.config.fields[key] = field;
   }
 
   removeField(fieldName: string): void {
@@ -15,7 +16,8 @@ export class FormsConfigBuilder {
   }
 
   updateField(field: IConfigFieldSchema): void {
-    this.removeField(field.name);
+    const key = field.id ?? field.name;
+    this.removeField(key);
     this.addField(field);
   }
 

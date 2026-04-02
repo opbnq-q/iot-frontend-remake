@@ -69,8 +69,14 @@ const formStore = useForm();
                 <Button
                     @click="
                         () => {
+                            if (formStore.isVisible) formStore.hide();
                             formStore.open(action.getConfig(), {
-                                save: () => console.log(action.getConfig()),
+                                save: (obj) => {
+                                    console.log(obj);
+                                    action
+                                        .fetch(obj)
+                                        .catch((e) => console.log(e));
+                                },
                                 close: () => formStore.hide(),
                             });
                         }

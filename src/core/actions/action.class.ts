@@ -6,6 +6,8 @@ import type { IConfigSchema } from "../forms/interfaces/config.schema.interface"
 import { FormsConfigBuilder } from "../forms/config-builder.forms";
 import { FormsConfigField } from "../forms/field.config.schema";
 
+export type CallActionArg = { name: string; value: unknown };
+
 export class Action {
   id: string = "";
   name: string = "";
@@ -19,19 +21,25 @@ export class Action {
     this.args = args;
   }
 
-  async fetch(actionId: string, args: { name: string; value: string }[]) {
-    return await this.conn.executeAction(actionId, args);
+  async fetch(args: Record<string, unknown>) {
+    return await this.conn.executeAction(this.id, args);
   }
 
   getConfig(): IConfigSchema {
     const builder = new FormsConfigBuilder();
     this.args.forEach((arg) => {
       const field = new FormsConfigField();
+      const argId = "id" in arg ? (arg as { id?: string }).id : undefined;
+      field.setId(argId ?? arg.name);
       field.setName(arg.name);
       field.setType(arg.type);
       builder.addField(field.build());
     });
-    return builder.build();
+    const config = builder.build();
+    return {
+      ...config,
+      title: this.name,
+    };
   }
 
   static async getAll(conn: DeviceConnection) {

@@ -23,8 +23,9 @@ export interface IParamMetadata {
 }
 
 export interface IActionArg {
+  id?: string;
   name: string;
-  type: FieldMetaType;
+  type: FieldType;
 }
 
 export interface IActionMetadata {
@@ -66,8 +67,8 @@ export class DeviceConnection {
       ...init,
       headers,
     });
-
-    if (!response.ok) throw new HttpException(response.status);
+    if (!response.ok)
+      throw new HttpException(response.status, await response.text());
     return (await response.json()) as T;
   }
 
@@ -96,12 +97,14 @@ export class DeviceConnection {
 
   public async executeAction(
     id: string,
-    args: Record<string, unknown>[],
+    args: Record<string, unknown>,
   ): Promise<IStatusResponse> {
-    return this.requestJson<IStatusResponse>("/action", {
+    const response = await this.requestJson<IStatusResponse>("/action", {
       method: "POST",
       body: JSON.stringify({ id, args }),
     });
+
+    return response;
   }
 
   public subscribeTelemetry(handlers: IWSHandlers): WebSocket {

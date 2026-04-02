@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { Button } from "@/components/ui/button";
 import {
     Card,
     CardAction,
     CardContent,
     CardHeader,
 } from "@/components/ui/card";
+import { Action } from "@/core/actions/action.class";
 import type { Device, IDataField } from "@/core/device/device.class";
+import { useForm } from "@/stores/use-form.store";
 import { onMounted, onUnmounted, ref } from "vue";
 
 const props = defineProps<{
@@ -20,16 +23,22 @@ const data = ref<
     }>
 >({});
 
-onMounted(() => {
+const actions = ref<Action[]>([]);
+
+onMounted(async () => {
     props.device.addListener((obj) => {
         data.value.name = obj.name;
         data.value.color = obj.color;
         data.value.fields = obj.dataFields;
     });
     props.device.ws();
+
+    actions.value = await Action.getAll(props.device.connection);
 });
 
 onUnmounted(() => props.device.closeWs());
+
+const formStore = useForm();
 </script>
 
 <template>
@@ -55,6 +64,22 @@ onUnmounted(() => props.device.closeWs());
                 >
             </div>
         </CardContent>
-        <CardAction class="pt-2"></CardAction>
+        <CardAction class="p-4">
+            <div class="flex justify-center flex-wrap gap-4">
+                <Button
+                    @click="
+                        () => {
+                            formStore.open(action.getConfig(), {
+                                save: () => console.log(action.getConfig()),
+                                close: () => formStore.hide(),
+                            });
+                        }
+                    "
+                    variant="outline"
+                    v-for="action in actions"
+                    >{{ action.name }}</Button
+                >
+            </div>
+        </CardAction>
     </Card>
 </template>

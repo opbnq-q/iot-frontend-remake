@@ -9,7 +9,7 @@ export interface IDataField {
 export type Listener = (device: Device) => void;
 
 export class Device {
-  private readonly connection: DeviceConnection;
+  public readonly connection: DeviceConnection;
   public color?: string;
   public name?: string;
 

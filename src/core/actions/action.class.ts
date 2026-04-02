@@ -1,25 +1,17 @@
-import { HttpException } from "@/exceptions/http.exception";
 import type {
+  DeviceConnection,
   IActionArg,
-  IActionMetadata,
 } from "../connection/device.connection";
+import type { IConfigSchema } from "../forms/interfaces/config.schema.interface";
+import { FormsConfigBuilder } from "../forms/config-builder.forms";
+import { FormsConfigField } from "../forms/field.config.schema";
 
 export class Action {
   id: string = "";
   name: string = "";
   args: IActionArg[] = [];
 
-  constructor(
-    private readonly conn: {
-      url: string;
-      getActionScheme: () => Promise<IActionMetadata>;
-    },
-  ) {}
-
-  async setup() {
-    const data = await this.conn.getActionScheme();
-    this.update(data.id, data.name, data.args);
-  }
+  constructor(private readonly conn: DeviceConnection) {}
 
   update(id: string, name: string, args: IActionArg[]) {
     this.id = id;
@@ -27,18 +19,33 @@ export class Action {
     this.args = args;
   }
 
-  async fetch(values: { name: string; value: string }) {
-    const response = await fetch(`${this.conn.url}/action`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: this.id,
-        args: values,
-      }),
-    });
+  async fetch(actionId: string, args: { name: string; value: string }[]) {
+    return await this.conn.executeAction(actionId, args);
+  }
 
-    if (!response.ok) throw new HttpException(response.status);
+  getConfig(): IConfigSchema {
+    const builder = new FormsConfigBuilder();
+    this.args.forEach((arg) => {
+      const field = new FormsConfigField();
+      field.setName(arg.name);
+      field.setType(arg.type);
+      builder.addField(field.build());
+    });
+    return builder.build();
+  }
+
+  static async getAll(conn: DeviceConnection) {
+    const actions = await conn.getActionScheme();
+    const objects: Action[] = [];
+    actions.forEach((actionMetadata) => {
+      const action = new Action(conn);
+      action.update(
+        actionMetadata.id,
+        actionMetadata.name,
+        actionMetadata.args,
+      );
+      objects.push(action);
+    });
+    return objects;
   }
 }

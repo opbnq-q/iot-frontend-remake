@@ -25,7 +25,7 @@ export interface IParamMetadata {
 export interface IActionArg {
   id?: string;
   name: string;
-  type: FieldType;
+  type: FieldMetaType;
 }
 
 export interface IActionMetadata {

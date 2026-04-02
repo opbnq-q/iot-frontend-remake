@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
     Card,
     CardAction,
@@ -9,6 +10,7 @@ import {
 import { Action } from "@/core/actions/action.class";
 import type { Device, IDataField } from "@/core/device/device.class";
 import { useForm } from "@/stores/use-form.store";
+import { AlertCircleIcon, CheckCircle2Icon } from "lucide-vue-next";
 import { onMounted, onUnmounted, ref } from "vue";
 
 const props = defineProps<{
@@ -23,7 +25,22 @@ const data = ref<
     }>
 >({});
 
-const actions = ref<Action[]>([]);
+type ActionView = Pick<Action, "name" | "fetch" | "getConfig">;
+
+const actions = ref<ActionView[]>([]);
+
+type AlertState = {
+    variant: "default" | "destructive";
+    title: string;
+    description?: string;
+};
+
+const alertState = ref<AlertState>({
+    variant: "default",
+    title: "",
+    description: "",
+});
+const isAlertVisible = ref(false);
 
 onMounted(async () => {
     props.device.addListener((obj) => {
@@ -39,6 +56,43 @@ onMounted(async () => {
 onUnmounted(() => props.device.closeWs());
 
 const formStore = useForm();
+
+const showAlert = (state: AlertState) => {
+    alertState.value = state;
+    isAlertVisible.value = true;
+};
+
+const clearAlert = () => {
+    isAlertVisible.value = false;
+};
+
+const openActionForm = (action: ActionView) => {
+    if (formStore.isVisible) formStore.hide();
+    formStore.open(action.getConfig(), {
+        save: async (obj) => {
+            clearAlert();
+            try {
+                const response = await action.fetch(obj);
+                formStore.hide();
+                showAlert({
+                    variant: "default",
+                    title: "Команда отправлена",
+                    description: response?.status ?? "Успешно",
+                });
+            } catch (e) {
+                showAlert({
+                    variant: "destructive",
+                    title: "Ошибка выполнения",
+                    description:
+                        e instanceof Error
+                            ? e.message
+                            : "Не удалось выполнить команду",
+                });
+            }
+        },
+        close: () => formStore.hide(),
+    });
+};
 </script>
 
 <template>
@@ -53,6 +107,14 @@ const formStore = useForm();
             </div>
         </CardHeader>
         <CardContent class="space-y-3">
+            <Alert v-if="isAlertVisible" :variant="alertState.variant">
+                <CheckCircle2Icon v-if="alertState.variant !== 'destructive'" />
+                <AlertCircleIcon v-else />
+                <AlertTitle>{{ alertState.title }}</AlertTitle>
+                <AlertDescription v-if="alertState.description">
+                    {{ alertState.description }}
+                </AlertDescription>
+            </Alert>
             <div
                 v-for="field in data.fields"
                 :key="field.name"
@@ -67,20 +129,7 @@ const formStore = useForm();
         <CardAction class="p-4">
             <div class="flex justify-center flex-wrap gap-4">
                 <Button
-                    @click="
-                        () => {
-                            if (formStore.isVisible) formStore.hide();
-                            formStore.open(action.getConfig(), {
-                                save: (obj) => {
-                                    console.log(obj);
-                                    action
-                                        .fetch(obj)
-                                        .catch((e) => console.log(e));
-                                },
-                                close: () => formStore.hide(),
-                            });
-                        }
-                    "
+                    @click="openActionForm(action)"
                     variant="outline"
                     v-for="action in actions"
                     >{{ action.name }}</Button
